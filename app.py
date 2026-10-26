@@ -32,7 +32,7 @@ def _thumbnail(path: str, modified: int, size: int) -> bytes:
 
 
 def create_app(config: dict | None = None) -> Flask:
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder=str(ROOT / "public" / "static"), static_url_path="/static")
     app.config.from_mapping(
         DATA_FILE=os.environ.get("DATA_FILE", str(ROOT / "DATA_FOR_MAPPING-1.xlsx")),
         ASSETS_DIR=str(ROOT / "assets"),

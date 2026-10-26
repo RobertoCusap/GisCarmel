@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import fnmatch
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
@@ -10,7 +11,7 @@ from openpyxl import Workbook
 from PIL import Image
 
 from app import create_app
-from build import copy_static, prepare_photos, verify_photos
+from build import STATIC_FILES, prepare_photos, verify_photos, verify_static
 from plant_data import DataError, load_dataset
 
 
@@ -112,12 +113,27 @@ class DeploymentTests(unittest.TestCase):
         with self.assertRaisesRegex(DataError, "Invalid photo path"):
             load_dataset(self.book, self.root / "assets", path)
 
-    def test_build_copies_static_files_to_cdn_paths(self):
-        source = self.root / "static/vendor"
-        source.mkdir(parents=True)
-        (source / "leaflet.js").write_text("local library", encoding="utf-8")
-        copy_static(self.root)
-        self.assertEqual((self.root / "public/static/vendor/leaflet.js").read_text(encoding="utf-8"), "local library")
+    def test_build_fails_if_a_required_stylesheet_is_missing(self):
+        for name in STATIC_FILES:
+            path = self.root / "public/static" / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"website asset")
+        verify_static(self.root)
+        (self.root / "public/static/styles.css").unlink()
+        with self.assertRaisesRegex(ValueError, "Missing public/static/styles.css"):
+            verify_static(self.root)
+
+    def test_public_assets_are_in_the_upload_instead_of_ignored_generated_files(self):
+        project = Path(__file__).resolve().parents[1]
+        for ignore_file in (".gitignore", ".vercelignore"):
+            patterns = [line.strip() for line in (project / ignore_file).read_text().splitlines()
+                        if line.strip() and not line.startswith(("#", "!"))]
+            for name in STATIC_FILES:
+                relative = "public/static/" + name
+                self.assertTrue((project / relative).is_file(), relative)
+                for pattern in patterns:
+                    self.assertFalse(fnmatch.fnmatchcase(relative, pattern.rstrip("/") + ("/**" if pattern.endswith("/") else "")),
+                                     f"{relative} is excluded by {ignore_file}: {pattern}")
 
 
 if __name__ == "__main__":

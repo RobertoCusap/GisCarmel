@@ -8,5 +8,3 @@ tests/
 docs/
 **/__pycache__/
 *.pyc
-# Recreated by the build command from static/.
-public/static/

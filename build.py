@@ -10,7 +10,6 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
-import shutil
 import sys
 
 from PIL import Image, ImageOps
@@ -20,6 +19,13 @@ from plant_data import IMAGE_EXTENSIONS
 
 ROOT = Path(__file__).resolve().parent
 MANIFEST_VERSION = 1
+STATIC_FILES = (
+    "styles.css", "app.js", "map.css", "map.js", "favicon.svg",
+    "vendor/leaflet/leaflet.js", "vendor/leaflet/leaflet.css", "vendor/leaflet/LICENSE",
+    "vendor/leaflet/images/layers.png", "vendor/leaflet/images/layers-2x.png",
+    "vendor/leaflet/images/marker-icon.png", "vendor/leaflet/images/marker-icon-2x.png",
+    "vendor/leaflet/images/marker-shadow.png",
+)
 
 
 def prepare_photos(root: Path) -> dict:
@@ -98,12 +104,13 @@ def verify_photos(root: Path) -> dict:
     return {"photos": count, "original_bytes": manifest.get("original_bytes", 0), "web_bytes": web_bytes}
 
 
-def copy_static(root: Path) -> None:
-    # Vercel serves public/ directly; Flask keeps serving static/ during local use.
-    source = root / "static"
-    if not source.is_dir():
-        raise ValueError("Missing static/ website files.")
-    shutil.copytree(source, root / "public" / "static", dirs_exist_ok=True)
+def verify_static(root: Path) -> None:
+    # These are source files committed directly, rather than generated copies.
+    # Both the local Flask server and Vercel's CDN use the same directory.
+    for name in STATIC_FILES:
+        path = root / "public" / "static" / name
+        if not path.is_file() or path.stat().st_size == 0:
+            raise ValueError(f"Missing public/static/{name}. Include public/static/ in the Git commit and deployment.")
 
 
 def main() -> int:
@@ -114,13 +121,13 @@ def main() -> int:
         if not args.check:
             prepare_photos(ROOT)
         stats = verify_photos(ROOT)
-        copy_static(ROOT)
+        verify_static(ROOT)
     except (OSError, ValueError) as exc:
         print(f"Asset build failed: {exc}", file=sys.stderr)
         return 1
     print(f"Verified {stats['photos']} photos and thumbnails.")
     print(f"Originals: {stats['original_bytes'] / 1_000_000:.2f} MB; web copies: {stats['web_bytes'] / 1_000_000:.2f} MB.")
-    print("Static website files copied to public/static/. Original photos are unchanged.")
+    print("Verified website assets in public/static/. Original photos are unchanged.")
     return 0
 
 

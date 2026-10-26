@@ -63,7 +63,7 @@ The manifest stores the folder catalogue and source SHA-256 fingerprints. Observ
 
 On Vercel, photos and browser libraries are served as static files from `public/`. Both `assets/` and `public/` are excluded from the Python function. The small manifest stays in the function so species photo links remain available without either image directory. Local Flask routes serve the same URLs from disk.
 
-`python build.py --check` verifies prepared images without reading originals, then copies `static/` to `public/static/`. Vercel runs this command. Regenerate photos locally with `python build.py` after adding, replacing, or removing source photos; removed source photos are removed from the generated collection. Commit the updated manifest and prepared photos together.
+`python build.py --check` verifies prepared images without reading originals and checks that the committed website assets exist in `public/static/`. Vercel runs this command. Stylesheets, scripts, and Leaflet files live directly in that tracked directory; no deployment-time copy is required. Regenerate photos locally with `python build.py` after adding, replacing, or removing source photos; removed source photos are removed from the generated collection. Commit the updated manifest and prepared photos together.
 
 ## Application architecture
 
@@ -80,7 +80,7 @@ The app has no database. Local use does not submit observations to a hosted serv
 
 ## Basemaps and connectivity
 
-Leaflet's JavaScript and CSS are bundled locally in `static/vendor/leaflet/`. The application interface, data, and images can be served locally without a content delivery network.
+Leaflet's JavaScript and CSS are bundled in `public/static/vendor/leaflet/`. Locally Flask serves `public/static/` under `/static/`; Vercel serves the same files from its CDN. The application interface, data, and images can be served locally without a content delivery network.
 
 Street map tiles and satellite imagery are requested by the browser from their map providers. Those backgrounds need internet access. Using a local server does not make externally supplied basemaps available offline.
 

@@ -132,5 +132,9 @@ def create_app(config: dict | None = None) -> Flask:
     return app
 
 
+# Export the Flask instance for WSGI hosts, including Vercel.
+app = create_app()
+
+
 if __name__ == "__main__":
-    create_app().run(host="127.0.0.1", port=int(os.environ.get("PORT", "5055")), debug=False)
+    app.run(host="127.0.0.1", port=int(os.environ.get("PORT", "5055")), debug=False)

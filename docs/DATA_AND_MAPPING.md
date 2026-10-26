@@ -84,6 +84,8 @@ Leaflet's JavaScript and CSS are bundled in `public/static/vendor/leaflet/`. Loc
 
 Street map tiles and satellite imagery are requested by the browser from their map providers. Those backgrounds need internet access. Using a local server does not make externally supplied basemaps available offline.
 
+The satellite layer uses Esri World Imagery at a maximum source zoom of 18. Live availability checks found zoom-18 imagery for all 37 source tiles containing the supplied observations; sampled zoom-19 locations returned no-data coverage. Display zoom levels 19–21 therefore enlarge the valid zoom-18 images instead of requesting the unavailable higher-resolution tiles. This is called overzooming. It keeps the satellite background visible while leaving the original plant coordinates intact, but it does not add finer imagery detail and can look softer when enlarged. Normal internet/service failures can still prevent a tile from loading.
+
 No API key is required for the configured basemaps. Attribution must remain visible. Provider availability and usage policies still apply when you later deploy or adapt the application.
 
 ## Exports

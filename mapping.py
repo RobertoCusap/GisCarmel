@@ -80,7 +80,10 @@ def build_map(dataset: dict) -> str:
         attr='Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
         name="Satellite",
         max_zoom=21,
-        max_native_zoom=19,
+        # Esri's zoom-19 tiles return a no-data image in this survey area.
+        # All source locations have zoom-18 imagery. Reuse those tiles when
+        # zooming closer, rather than displaying the provider's placeholder.
+        max_native_zoom=18,
         show=False,
     ).add_to(atlas_map)
 

@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -71,6 +72,23 @@ def check(url: str, screenshot_dir: str | None = None) -> None:
         page.locator("#speciesSort").select_option("az")
         page.locator("[data-basemap=satellite]").click()
         assert map_frame.evaluate("ATLAS_MAP_CONFIG.map.hasLayer(ATLAS_MAP_CONFIG.basemaps.satellite)")
+        # Display zoom can exceed the available imagery resolution. Verify the
+        # browser keeps requesting valid source tiles instead of no-data tiles.
+        for zoom in (19, 20, 21):
+            map_frame.evaluate("""zoom => { const c=ATLAS_MAP_CONFIG; c.map.closePopup();
+                const point=Object.values(c.locations)[0][0];
+                c.map.setView([point.latitude,point.longitude],zoom,{animate:false}); }""", zoom)
+            map_frame.wait_for_function("""() => {
+                const layer=ATLAS_MAP_CONFIG.basemaps.satellite;
+                const tiles=Object.values(layer._tiles).filter(tile=>tile.current);
+                return !layer.isLoading() && tiles.length>0 && tiles.every(tile=>tile.el.complete && tile.el.naturalWidth>0);
+            }""")
+            urls = map_frame.evaluate("""() => Object.values(ATLAS_MAP_CONFIG.basemaps.satellite._tiles)
+                .filter(tile=>tile.current).map(tile=>tile.el.src)""")
+            assert urls and all(re.search(r"/tile/18/", url) for url in urls), f"Unavailable satellite source tiles requested at display zoom {zoom}: {urls}"
+            assert map_frame.evaluate("ATLAS_MAP_CONFIG.map.getZoom()") == zoom
+        if screenshot_dir:
+            page.screenshot(path=str(out / "satellite-zoom21.png"), full_page=True)
         page.locator("[data-basemap=street]").click()
         page.locator("#legendToggle").click()
         assert page.locator(".legend-item").count() == len(species)
@@ -112,7 +130,7 @@ def check(url: str, screenshot_dir: str | None = None) -> None:
             page.set_viewport_size({"width": width, "height": 960})
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), f"Horizontal overflow at {width}px"
         assert not errors, json.dumps(errors)
-        print(f"Browser checks passed: {len(species)} filters, photos, shared locations, search, sort, layers, legend, dialog, fullscreen, offline geometry, 320-1920px layouts; no JS errors.")
+        print(f"Browser checks passed: {len(species)} filters, photos, shared locations, search, sort, satellite overzoom19-21, layers, legend, dialog, fullscreen, offline geometry, 320-1920px layouts; no JS errors.")
         browser.close()
 
 

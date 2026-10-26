@@ -146,6 +146,8 @@ Use `--url http://127.0.0.1:5056` if the app is running on another port. Add `--
 
 **The map background is blank but dots or controls appear.** Check the internet connection. Street and satellite tiles come from external providers; try the other basemap. The dataset and photos do not require an external map service account.
 
+**Satellite imagery looks softer when zoomed very close.** The satellite view uses the available zoom-18 imagery and enlarges it through display zoom 21. This avoids Esri's “Map data not available” tiles in the survey area. Additional zoom magnifies the existing photo rather than adding new detail; plant coordinates remain unchanged.
+
 **A plant has no photograph.** Confirm that its matching folder contains a supported image and is available locally. A folder containing no usable images is treated as having no photo. The app does not borrow photographs from a different species.
 
 **New photos are not appearing.** Run `python build.py` with the project's Python, then restart the app. Commit the updated `public/` photos and `data/photo_manifest.json` before redeploying.

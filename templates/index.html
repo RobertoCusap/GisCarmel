@@ -1,0 +1,86 @@
+{% macro icon(name, cls='') -%}<svg class="icon {{ cls }}" aria-hidden="true"><use href="#i-{{ name }}"></use></svg>{%- endmacro %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#254c3b">
+  <meta name="description" content="Explore the recorded plant species of Mt. Carmel, Bayugan City, Agusan del Sur through an interactive field map.">
+  <title>Mt. Carmel Plant Atlas · Explore the flora</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body>
+<svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M19 4C10 2 3 7 5 14c2 6 12 5 14-10Z"/><path d="M4 21 15 9M8 16v-5m3 2 5 1"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+  <symbol id="i-fit" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m8 0h5v-5"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6M3 3l6 6m12-6-6 6M3 21l6-6m12 6-6-6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 10 6-10 6L2 9l10-6Zm-9 11 9 5 9-5M3 18l9 5 9-5"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+</defs></svg>
+<a class="skip-link" href="#explore">Skip to plant map</a>
+<header class="site-header">
+  <a class="brand" href="/" aria-label="Mt. Carmel Plant Atlas home"><span class="brand-mark">{{ icon('leaf') }}</span><span>Mt. Carmel<span class="brand-sub">PLANT ATLAS</span></span></a>
+  <nav aria-label="Main navigation"><a class="nav-link active" href="#explore">Explore the map</a><button class="nav-link" data-open-about>About the atlas {{ icon('arrow') }}</button></nav>
+  <div class="header-location">{{ icon('pin') }}<span>Bayugan City<span>Agusan del Sur, Philippines</span></span></div>
+</header>
+<main class="page-shell">
+  <section class="hero" aria-labelledby="page-title">
+    <div class="hero-heading"><p class="eyebrow"><span class="tiny-line"></span> A FIELD GUIDE TO LOCAL FLORA</p><h1 id="page-title">Rooted in <em>Mt. Carmel.</em></h1><p class="hero-caption">Discover the plants that make this place their home.</p></div>
+    <div class="hero-summary"><p>A closer look at our local landscape.<br>Explore recorded species, find their locations,<br class="desktop-break"> and meet the plants behind every point.</p><div class="hero-stats"><div><strong>{{ data.stats.species }}</strong><span>plant species</span></div><div><strong>{{ data.stats.observations }}</strong><span>observations</span></div><div><strong>{{ data.stats.locations }}</strong><span>GPS locations</span></div></div></div>
+  </section>
+
+  <section class="explorer" id="explore" aria-label="Plant species and interactive map">
+    <aside class="directory" aria-labelledby="directory-title">
+      <div class="directory-top"><div class="section-heading"><h2 id="directory-title">The plant collection</h2><span class="number-label">{{ data.stats.species }}</span></div><p>Choose a species. Follow its roots.</p>
+      <div class="search-wrap">{{ icon('search') }}<input id="speciesSearch" type="search" placeholder="Search plants or scientific names…" aria-label="Search species by local or scientific name" autocomplete="off"><button id="clearSearch" class="clear-search" aria-label="Clear species search" hidden>{{ icon('close') }}</button></div>
+      <button id="allSpecies" class="all-species selected" aria-pressed="true"><span class="all-species-icon">{{ icon('grid') }}</span><span><strong>All plant species</strong><small>The full field collection</small></span><span class="all-count">{{ data.stats.observations }}</span>{{ icon('chevron') }}</button>
+      <div class="list-controls"><span id="resultsCount">{{ data.stats.species }} SPECIES</span><label class="sort-control"><span class="sr-only">Sort species</span><select id="speciesSort"><option value="az">Name A–Z</option><option value="count">Most observed</option></select>{{ icon('down') }}</label></div></div>
+      <div id="speciesList" class="species-list" aria-label="Plant species">
+      {% for species in data.species %}
+        <button class="species-row" data-species="{{ species.id }}" data-name="{{ species.name }}" data-scientific="{{ species.scientific_name or '' }}" data-count="{{ species.count }}" style="--species-color:{{ species.color }}" aria-pressed="false">
+          <span class="species-thumb">{% if species.thumbnail %}<img src="{{ species.thumbnail }}?size=120" alt="" loading="lazy" width="46" height="46">{% else %}{{ icon('leaf') }}{% endif %}</span>
+          <span class="species-label"><strong>{{ species.name }}</strong><span>{{ species.scientific_name or 'Scientific name not recorded' }}</span></span><span class="species-count"><span class="color-dot"></span>{{ species.count }}</span>
+        </button>
+      {% endfor %}
+      </div>
+      <div id="emptySearch" class="empty-search" hidden>{{ icon('search') }}<strong>No plants found</strong><p>Try another local or scientific name.</p><button id="resetSearch">Clear search</button></div>
+      <div class="directory-footer">{{ icon('info') }}<span>Dot colors match the species in this list.</span></div>
+    </aside>
+
+    <div class="map-panel" id="mapPanel">
+      <div class="map-heading"><div><h2 id="mapTitle">The field map</h2><p id="mapSubtitle">All {{ data.stats.species }} species · {{ data.stats.observations }} observations</p></div><div class="basemap-switch" role="group" aria-label="Basemap"><button class="active" data-basemap="street" aria-pressed="true">Street</button><button data-basemap="satellite" aria-pressed="false">Satellite</button></div></div>
+      <div class="map-stage" id="mapStage">
+        <iframe id="mapFrame" src="{{ url_for('map_view') }}" title="Interactive plant observation map of Mt. Carmel" allow="fullscreen"></iframe>
+        <div class="map-loading" id="mapLoading"><span class="loading-leaf">{{ icon('leaf') }}</span><strong>Opening the field atlas</strong><span>Placing the recorded plants on the map…</span></div>
+        <div id="mapFailure" class="map-failure" hidden><strong>The map could not open.</strong><span>Check that the app is running, then try again.</span><button id="retryMap">Reload map</button></div>
+        <div class="map-selection"><span id="selectionDot" class="selection-dot"></span><span id="selectionLabel">All plant species</span><button id="clearSelection" aria-label="Show all plant species" hidden>{{ icon('close') }}</button></div>
+        <div class="map-toolbar"><button id="fitMap" title="Fit selected observations" aria-label="Fit selected observations">{{ icon('fit') }}</button><div class="zoom-buttons"><button id="zoomIn" title="Zoom in" aria-label="Zoom in">{{ icon('plus') }}</button><button id="zoomOut" title="Zoom out" aria-label="Zoom out">{{ icon('minus') }}</button></div><button id="fullscreenMap" title="Expand map" aria-label="Expand map" aria-pressed="false">{{ icon('expand') }}</button></div>
+        <div class="legend-container"><button id="legendToggle" class="legend-toggle" aria-expanded="false" aria-controls="legendContent">{{ icon('layers') }}<span>Species key</span>{{ icon('down') }}</button><div id="legendContent" class="legend-content" hidden><p>SPECIES ON THE MAP</p><div id="legendItems"></div></div></div>
+        <div class="map-tip" id="mapTip">{{ icon('pin') }}<span>Click a dot to get to know a plant</span></div>
+        <div class="tile-notice" id="tileNotice" role="status" hidden>Some map tiles could not load. Check your internet or switch the basemap. Your plant records are still available.</div>
+      </div>
+      <div class="map-footer"><span class="map-records"><span class="status-dot"></span><span id="visibleCount">{{ data.stats.observations }} observations on the map</span></span><span id="mapCoordinates" class="coordinates">WGS 84 · decimal degrees</span></div>
+    </div>
+  </section>
+
+  <section class="below-map"><div class="map-context">{{ icon('leaf') }}<p><strong>A small window into Mt. Carmel's plant life.</strong> This atlas brings together field locations and species photographs from Mt. Carmel, Bayugan City. Select a species to explore its distribution, or click a point for a closer look.</p></div><div class="export-area"><span>TAKE THE DATA WITH YOU</span><div class="export-links"><a id="exportCsv" href="/download/observations.csv">{{ icon('download') }} CSV</a><a id="exportGeojson" href="/download/observations.geojson">GeoJSON {{ icon('arrow') }}</a></div></div></section>
+  <footer class="site-footer"><span>MT. CARMEL PLANT ATLAS</span><span>Explore locally. See what grows around you.</span><button data-open-about>About the data {{ icon('arrow') }}</button></footer>
+</main>
+
+<dialog id="aboutDialog" class="about-dialog" aria-labelledby="aboutTitle"><div class="dialog-top"><span class="eyebrow">BEHIND THE ATLAS</span><button id="closeAbout" class="icon-button" aria-label="Close about the atlas">{{ icon('close') }}</button></div><h2 id="aboutTitle">Every plant has a place.</h2><p>This interactive GIS atlas explores the plant observations recorded in Mt. Carmel, Bayugan City, Agusan del Sur. The collection contains {{ data.stats.observations }} observations across {{ data.stats.species }} locally named species entries.</p><h3>Reading the map</h3><p>Each dot marks a recorded location. Colors identify species, and selecting a plant in the collection shows only its observations. Several records can share a coordinate; use the arrows in the popup to browse them.</p><h3>About the photographs</h3><p>Photos are matched to plant species using the supplied folders. They are representative images of that species, rather than verified photos of an individual map point. Species without supplied photos show their recorded information only.</p><h3>Keeping the source intact</h3><p>Local and scientific names are shown as recorded in the field workbook. Shared coordinates and observations outside the main area are preserved. The atlas does not infer a surveyed site boundary.</p>{% if data.issues %}<details class="data-notes"><summary>Source data notes <span>{{ data.issues|length }}</span></summary><ul>{% for issue in data.issues %}<li>{{ issue.message }}</li>{% endfor %}</ul></details>{% endif %}<p class="dialog-footnote">Map tiles require an internet connection. Plant data and photographs are served from this local app.</p><button class="primary-button" id="startExploring">Back to exploring {{ icon('arrow') }}</button></dialog>
+<div id="announcer" class="sr-only" role="status" aria-live="polite"></div>
+<script id="atlasData" type="application/json">{{ {'species':data.species,'stats':data.stats}|tojson }}</script>
+</body>
+</html>

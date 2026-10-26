@@ -1,0 +1,32 @@
+:root { color-scheme: light; }
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+.leaflet-container { background: #e8ede3; font-family: "Segoe UI", Arial, sans-serif; }
+.leaflet-control-attribution { max-width: min(90vw, 600px); font-size: 9px; line-height: 1.5; background: rgba(255,255,255,.86) !important; }
+.leaflet-control-attribution a { color: #385f48; }
+.leaflet-control-scale-line { border-color: #526654; background: rgba(255,255,255,.82); color: #354337; font-size: 10px; }
+.leaflet-tooltip { border: 0; border-radius: 6px; padding: 6px 10px; box-shadow: 0 3px 12px #17372622; color: #1c392c; font-size: 11px; }
+.leaflet-interactive:focus { outline: 3px solid #143d2a; outline-offset: 2px; }
+.atlas-popup .leaflet-popup-content-wrapper { padding: 0; border-radius: 13px; overflow: hidden; box-shadow: 0 8px 36px #15372838; }
+.atlas-popup .leaflet-popup-content { width: 280px !important; margin: 0; line-height: 1.4; }
+.atlas-popup .leaflet-popup-close-button { top: 8px; right: 8px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #fffffff0; color: #18392a; font-size: 21px; z-index: 2; box-shadow: 0 2px 10px #00000016; }
+.atlas-popup .leaflet-popup-close-button:hover { background: white; color: #102a1d; }
+.observation-photo { margin: 0; position: relative; background: #e7ebdf; }
+.observation-photo img { display: block; width: 100%; height: 175px; object-fit: cover; }
+.observation-photo figcaption { position: absolute; bottom: 0; width: 100%; box-sizing: border-box; background: linear-gradient(transparent, #0008); padding: 22px 12px 7px; font-size: 9px; color: white; }
+.observation-body { padding: 18px 19px 13px; }
+.observation-eyebrow { display: flex; align-items: center; gap: 6px; font-size: 8px; font-weight: 700; letter-spacing: 1.4px; color: #6c796d; }
+.observation-dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; }
+.observation-name { margin: 7px 0 3px; color: #173c2b; font-size: 22px; line-height: 1.15; font-weight: 600; }
+.observation-scientific { margin: 0 0 13px; font-size: 11px; font-style: italic; color: #778077; }
+.atlas-popup .observation-scientific { margin: 4px 0 10px; }
+.observation-coordinates { display: flex; gap: 25px; padding: 12px 0; margin: 12px 0 0; border-top: 1px solid #e9ece6; }
+.observation-coordinates dt { margin-bottom: 4px; color: #7a847b; font-size: 9px; }
+.observation-coordinates dd { margin: 0; color: #334b3b; font-size: 11px; font-variant-numeric: tabular-nums; }
+.observation-source { margin: 5px 0 0 !important; color: #879086; font-size: 9px; overflow-wrap: anywhere; }
+.observation-extra { font-size: 10px; color: #516453; }
+.observation-pager { display: flex; align-items: center; justify-content: space-between; gap: 7px; padding: 10px 15px; border-top: 1px solid #e8ece4; background: #f7f8f3; }
+.observation-page-label { color: #68756b; font-size: 10px; }
+.observation-page-button { display: grid; place-items: center; width: 28px; height: 26px; border: 1px solid #dfe5da; border-radius: 6px; background: white; color: #204d35; cursor: pointer; font-size: 15px; }
+.observation-page-button:hover { background: #eaf0e5; }
+.observation-page-button:focus-visible { outline: 2px solid #275d3f; outline-offset: 2px; }
+@media (max-width: 420px) { .atlas-popup .leaflet-popup-content { width: 255px !important; } .observation-photo img { height: 145px; } }

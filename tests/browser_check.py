@@ -47,11 +47,13 @@ def check(url: str, screenshot_dir: str | None = None) -> None:
 
         no_photo = next(item for item in species if not item["thumbnail"])
         page.locator(f"[data-species='{no_photo['id']}']").click()
+        page.wait_for_timeout(500)
         map_frame.evaluate("""() => { const c=ATLAS_MAP_CONFIG; c.markers.find(m=>c.map.hasLayer(c.groups[m.speciesId])).layer.fire('click'); }""")
         assert frame.locator(".observation-popup").count() == 1
         assert frame.locator(".observation-photo").count() == 0
 
         page.locator("#allSpecies").click()
+        page.wait_for_timeout(500)
         map_frame.evaluate("""() => { const c=ATLAS_MAP_CONFIG; const marker=c.markers.find(m=>c.locations[m.locationId].length>1); marker.layer.fire('click'); }""")
         first = frame.locator(".observation-source").inner_text()
         frame.get_by_role("button", name="Next observation at this location").click()

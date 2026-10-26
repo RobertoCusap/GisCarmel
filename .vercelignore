@@ -1,0 +1,12 @@
+# Upload the prepared web copies; keep originals on the local machine/in Git.
+assets/
+.venv/
+venv/
+.qa/
+.artifacts/
+tests/
+docs/
+**/__pycache__/
+*.pyc
+# Recreated by the build command from static/.
+public/static/

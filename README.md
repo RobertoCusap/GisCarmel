@@ -2,14 +2,14 @@
 
 A local GIS website for exploring the plant observations supplied for Mt. Carmel, Bayugan City, Agusan del Sur. Browse species in the left column and their recorded locations on the map. Select a dot to view the plant's source information and an available species photo.
 
-The app uses Python for the web server, Excel ingestion, map generation, and image processing. It includes source code and local setup instructions. No hosting account, deployment, database, API key, or Node.js build is required.
+The app uses Python for the web server, Excel ingestion, map generation, and image processing. No hosting account, database, API key, or Node.js build is required for local use. A small Vercel deployment configuration is included for when you choose to publish it.
 
 ## Requirements
 
 - Python **3.11 or newer**. The supplied dependency versions support this minimum; development used Python 3.14.
 - A current web browser.
 - Internet access to install dependencies and display the street or satellite basemap. The workbook, plant photographs, app code, and Leaflet browser library stay local.
-- The supplied `DATA_FOR_MAPPING-1.xlsx` and `assets/` folder in the project directory.
+- The supplied `DATA_FOR_MAPPING-1.xlsx` and either the prepared `public/` photos plus `data/photo_manifest.json`, or the original `assets/` folder.
 
 If this project is inside OneDrive, select **Always keep on this device** for the workbook and photograph folders before running it.
 
@@ -60,6 +60,10 @@ Photographs represent the selected **species**. They were supplied in species fo
 - `static/` — website styles and browser interactions, including the local Leaflet library.
 - `DATA_FOR_MAPPING-1.xlsx` — original observation data.
 - `assets/` — original species photographs.
+- `public/media/` and `public/thumbnails/` — optimized WebP photos for the website and its species list; commit these files.
+- `data/photo_manifest.json` — small photo index used when originals are excluded from deployment.
+- `build.py` — prepares web photos and copies website files to Vercel's static directory.
+- `vercel.json` and `.vercelignore` — Vercel packaging and upload exclusions.
 - `requirements.txt` — Python runtime dependencies.
 - `requirements-dev.txt` — runtime dependencies plus optional Playwright browser checks.
 - `tests/` — automated checks.
@@ -69,7 +73,13 @@ Photographs represent the selected **species**. They were supplied in species fo
 
 Stop the app before editing the workbook. Keep the existing column names and enter one observation per row. Save the workbook, then restart `app.py` and reload the browser.
 
-Add photographs inside the matching species folder under `assets/`. Supported image extensions and the explicit folder aliases are documented in [Data and mapping](docs/DATA_AND_MAPPING.md). Restart after changing the photo collection. The supplied collection currently provides 158 matched photographs for 18 source categories.
+Add photographs inside the matching species folder under `assets/`. Supported image extensions and the explicit folder aliases are documented in [Data and mapping](docs/DATA_AND_MAPPING.md). After changing photos, rebuild the web copies, then restart the app:
+
+```powershell
+.\.venv\Scripts\python.exe build.py
+```
+
+The build keeps the originals, creates correctly oriented WebP photos with a maximum edge of 1200 pixels, and creates separate 120-pixel thumbnails. The app prefers the prepared collection whenever its photo manifest exists. If no manifest exists, it uses the original folders. The supplied collection provides 158 matched photographs for 18 source categories.
 
 Keep a backup of your original data before making research edits. The application reads the workbook; it does not change its contents.
 
@@ -80,7 +90,32 @@ $env:DATA_FILE = "C:\path\to\your-observations.xlsx"
 .\.venv\Scripts\python.exe app.py
 ```
 
-On macOS or Linux, use `DATA_FILE="/path/to/your-observations.xlsx" .venv/bin/python app.py`. Photograph matching still uses this project's `assets/` folder. Remove the environment variable to restore the default workbook.
+On macOS or Linux, use `DATA_FILE="/path/to/your-observations.xlsx" .venv/bin/python app.py`. Photograph matching uses the prepared photo index when present, otherwise the original folders. Remove the environment variable to restore the default workbook.
+
+## Prepare for your Vercel deployment
+
+The earlier size error came from bundling the original photographs into the Python function. This setup separates the website files from the function:
+
+- Vercel serves `public/media/`, `public/thumbnails/`, and the generated `public/static/` from its CDN.
+- The Python function includes the workbook, templates, photo index, and runtime libraries. `assets/`, `public/`, `static/`, development environments, tests, and documentation are excluded from that function.
+- The photo index preserves species matching even when original photo folders are absent from the function.
+
+Prepare locally after changing photos:
+
+```powershell
+.\.venv\Scripts\python.exe build.py
+.\.venv\Scripts\python.exe build.py --check
+```
+
+Commit and push the code changes **including `public/media/`, `public/thumbnails/`, and `data/photo_manifest.json`**. Retain the original `assets/` locally or in your existing repository; no originals need to be deleted. `public/static/` is generated during the build and is intentionally ignored by Git.
+
+For the Vercel project, use the **Flask** framework preset. `vercel.json` sets the build command to **`python build.py --check`**. Leave the Output Directory at its framework default. Clear any old custom Build Command or Output Directory overrides if they conflict with these settings. Do not set `DATA_FILE` to a Windows path in Vercel; the bundled workbook is used by default.
+
+The Vercel build validates the committed web photos and copies `static/` to `public/static/`. It does not require the original image files. Missing prepared photos fail the build with a specific filename instead of silently dropping plant images.
+
+You control the commit, push, and deployment. These preparation commands do not publish anything. The actual function bundle size is determined by Vercel at build time; the original photos and web copies are both excluded from it.
+
+See the official [Flask static asset instructions](https://vercel.com/docs/frameworks/backend/flask#serving-static-assets) and [Python bundle exclusions](https://vercel.com/docs/functions/runtimes/python#controlling-what-gets-bundled).
 
 ## Checks
 
@@ -113,7 +148,11 @@ Use `--url http://127.0.0.1:5056` if the app is running on another port. Add `--
 
 **A plant has no photograph.** Confirm that its matching folder contains a supported image and is available locally. A folder containing no usable images is treated as having no photo. The app does not borrow photographs from a different species.
 
+**New photos are not appearing.** Run `python build.py` with the project's Python, then restart the app. Commit the updated `public/` photos and `data/photo_manifest.json` before redeploying.
+
 **The workbook cannot be found or read.** Keep it at the project root with the name `DATA_FOR_MAPPING-1.xlsx`. Check that OneDrive has downloaded it and that the required columns are present. See the terminal message for the specific problem.
+
+**Windows reports Permission denied for the workbook.** Close applications holding the workbook and ensure OneDrive has downloaded it. Do not delete or overwrite the source workbook to bypass a lock. Tests can use an identical readable copy by setting `DATA_FILE` and `TEST_DATA_FILE` to that copy for the test process.
 
 **Dependencies are missing.** Run the install command again using the `.venv` Python. Running the app with a different Python interpreter can use a different set of installed packages.
 

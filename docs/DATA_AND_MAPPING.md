@@ -39,7 +39,7 @@ Selecting a species filters the existing map layers without modifying the workbo
 
 ## Photograph matching
 
-Photographs are read from the supplied `assets/` subfolders. A folder is matched to its corresponding source local name, with explicit aliases for supplied folder names that differ from the workbook. A photo is assigned only within its matched species category.
+Photographs originate in the supplied `assets/` subfolders. A folder is matched to its corresponding source local name, with explicit aliases for supplied folder names that differ from the workbook. A photo is assigned only within its matched species category. After `python build.py`, the app reads the same folder/filename catalogue from `data/photo_manifest.json` and uses the optimized copies in `public/`. It does not need to open the originals to match species at runtime.
 
 The known folder aliases include:
 
@@ -53,7 +53,17 @@ These are **representative species photographs**. They are not evidence that the
 
 If no matching folder or usable photo exists, the observation has no image. Unmatched photo folders are not assigned to a different species. The supplied `Hydrocotyle verticillata` folder is unused because the workbook has no matching category. The collection provides 158 matched photographs across 18 source categories. The original photographs are preserved; the app can serve resized versions for display.
 
-Supported file extensions are `.jpg`, `.jpeg`, `.png`, `.webp`, and `.gif`. Place photos in the appropriate species folder, then restart the app. If a folder uses a different name, add a deliberate alias in `plant_data.py` after checking its identity.
+Supported source file extensions are `.jpg`, `.jpeg`, `.png`, `.webp`, and `.gif`. Place photos in the appropriate species folder, run `python build.py`, then restart the app. If a folder uses a different name, add a deliberate alias in `plant_data.py` after checking its identity.
+
+## Web photos and deployment size
+
+The build creates a WebP display copy with a maximum edge of 1200 pixels and a separate 120-pixel thumbnail for each source photo. It corrects EXIF orientation and omits embedded metadata. Original files are never overwritten. Generated names append `.webp` to the original filename so files sharing a stem with different extensions cannot collide.
+
+The manifest stores the folder catalogue and source SHA-256 fingerprints. Observation assignment uses the same source filename order and source categories. The format change does not move coordinates, merge categories, or associate a photo with another species.
+
+On Vercel, photos and browser libraries are served as static files from `public/`. Both `assets/` and `public/` are excluded from the Python function. The small manifest stays in the function so species photo links remain available without either image directory. Local Flask routes serve the same URLs from disk.
+
+`python build.py --check` verifies prepared images without reading originals, then copies `static/` to `public/static/`. Vercel runs this command. Regenerate photos locally with `python build.py` after adding, replacing, or removing source photos; removed source photos are removed from the generated collection. Commit the updated manifest and prepared photos together.
 
 ## Application architecture
 
@@ -62,11 +72,11 @@ Supported file extensions are `.jpg`, `.jpeg`, `.png`, `.webp`, and `.gif`. Plac
 3. `mapping.py` uses Folium to create map geometry, species layers, and the configuration needed by the browser map.
 4. The main HTML page displays the species catalogue and embeds the map from `/map` in a same-origin iframe.
 5. Small browser scripts connect the species selection and map controls to Leaflet. Popup controls let users inspect observations sharing a coordinate.
-6. Pillow handles resized photo delivery. CSV and GeoJSON downloads are assembled from the source observations under the active species filter.
+6. Pillow prepares optimized photos and thumbnails; local Flask can also resize a requested image. Vercel's CDN serves the prepared files directly. CSV and GeoJSON downloads are assembled from the source observations under the active species filter.
 
 Python owns data preparation and map construction. JavaScript handles browser interactions because Folium displays its maps using Leaflet.
 
-The app has no database and does not submit observations to a hosted service. Restart it after changing the workbook or photograph collection so that the loaded dataset and map agree.
+The app has no database. Local use does not submit observations to a hosted service. If you deploy it, the workbook and prepared images are included in your deployment and the app's data routes are accessible to the site's visitors. Restart after workbook changes; rebuild photos and restart after photograph changes.
 
 ## Basemaps and connectivity
 
@@ -94,8 +104,9 @@ All paths below are served by the local Flask app at `http://127.0.0.1:5055` by 
 - `/map` — the generated Folium map HTML embedded in the main page.
 - `/api/data` — the loaded species, observations, summary statistics, bounds, source metadata, and data issues as JSON.
 - `/api/status` — status, summary statistics, source metadata, and data issues as JSON.
-- `/media/<folder>/<filename>` — an original photograph within `assets/`. The app checks that the resolved file remains within that directory and has a supported image extension.
-- `/media/<folder>/<filename>?size=640` — a resized JPEG for display, with image orientation corrected from its metadata. Requested sizes are limited to 80–1200 pixels. The source image is unchanged.
+- `/media/<folder>/<filename>` — a prepared WebP from `public/media/`, or an original photograph from `assets/` for legacy photo URLs. Local file paths are checked to stay within their photo directories.
+- `/thumbnails/<folder>/<filename>` — the small prepared species thumbnail from `public/thumbnails/`.
+- Adding `?size=640` locally requests a resized JPEG, limited to 80–1200 pixels. On Vercel, the static CDN serves the already optimized variant; a size query does not dynamically resize it. The species list uses separate small thumbnail files.
 - `/download/observations.csv` — all usable observations in CSV format.
 - `/download/observations.geojson` — all usable observations as a GeoJSON FeatureCollection.
 
@@ -110,8 +121,8 @@ If the workbook is missing, unreadable, or contains no usable mapping data, the 
 3. Keep the required headers and enter one observation per row.
 4. Use valid decimal latitude and longitude values; retain the intended source category and scientific name.
 5. Place any new species photos in the correct folder and review folder aliases where names differ.
-6. Restart the app and reload the browser.
+6. Run `python build.py` if photos changed, then restart the app and reload the browser.
 7. Review observation totals, data issues, selected-species locations, and several photo popups.
 8. Run `python -m unittest discover -s tests -v` using the project's virtual environment after code changes.
 
-No deployment or hosting configuration is included. Local startup instructions are in [README.md](../README.md).
+Local startup and manual Vercel deployment preparation are documented in [README.md](../README.md). Preparation never pushes or deploys the project automatically.

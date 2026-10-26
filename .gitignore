@@ -17,6 +17,8 @@ htmlcov/
 .cache/
 .artifacts/
 .qa/
+public/static/
+.vercel/
 test-results/
 playwright-report/
 

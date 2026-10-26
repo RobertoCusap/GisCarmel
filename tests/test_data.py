@@ -1,6 +1,7 @@
 """Source-preservation checks for plant observations and representative photos."""
 
 from pathlib import Path
+import os
 from tempfile import TemporaryDirectory
 import unittest
 
@@ -99,7 +100,9 @@ class DatasetTests(unittest.TestCase):
 
     def test_provided_workbook_contract(self):
         project = Path(__file__).resolve().parents[1]
-        source = project / "DATA_FOR_MAPPING-1.xlsx"
+        # Allows validating an identical source copy when OneDrive/Excel locks
+        # the working file, without changing the workbook or source assertions.
+        source = Path(os.environ.get("TEST_DATA_FILE", project / "DATA_FOR_MAPPING-1.xlsx"))
         if not source.exists():
             self.skipTest("Original source workbook not present")
         data = load_dataset(source, project / "assets")

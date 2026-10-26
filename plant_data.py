@@ -9,6 +9,7 @@ from __future__ import annotations
 import colorsys
 from collections import Counter
 import hashlib
+import json
 import math
 from pathlib import Path
 import re
@@ -124,7 +125,29 @@ def _color(species_key: str, occupied: set[str]) -> str:
     raise DataError("Unable to assign a distinct species color")
 
 
-def _photo_folders(assets_path: Path) -> dict[str, list[Path]]:
+def _photo_folders(assets_path: Path, photo_manifest: Path | None = None) -> dict[str, list[Path]]:
+    if photo_manifest is not None:
+        try:
+            manifest = json.loads(Path(photo_manifest).read_text(encoding="utf-8"))
+            if manifest.get("version") != 1 or not isinstance(manifest.get("folders"), dict):
+                raise ValueError("Unsupported photo manifest format")
+            folders = {}
+            for folder, names in manifest["folders"].items():
+                if not isinstance(folder, str) or not isinstance(names, list) or not names:
+                    raise ValueError("Invalid photo folder")
+                photos = []
+                for name in names:
+                    if not isinstance(name, str):
+                        raise ValueError("Invalid photo filename")
+                    relative = Path(name)
+                    if (relative.is_absolute() or len(relative.parts) != 2 or relative.parts[0] != folder
+                            or folder in {".", ".."} or "\\" in name or relative.suffix.lower() != ".webp"):
+                        raise ValueError("Invalid photo path")
+                    photos.append(assets_path / relative)
+                folders[_key(folder)] = photos
+            return folders
+        except (OSError, ValueError, TypeError, AttributeError) as exc:
+            raise DataError(f"Cannot read photo manifest: {exc}. Run python build.py to regenerate it.") from exc
     if not assets_path.is_dir():
         return {}
     return {
@@ -147,7 +170,7 @@ def _distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return 6371.0088 * 2 * math.asin(min(1, math.sqrt(a)))
 
 
-def load_dataset(workbook_path: Path, assets_path: Path) -> dict:
+def load_dataset(workbook_path: Path, assets_path: Path, photo_manifest: Path | None = None) -> dict:
     """Load all usable worksheets and return the website's JSON-ready dataset.
 
     Each nonempty source row is one observation, including repeated coordinates.
@@ -245,7 +268,7 @@ def load_dataset(workbook_path: Path, assets_path: Path) -> dict:
     if not observations:
         raise DataError("No valid plant locations found. Check that each row has a local name and valid latitude/longitude.")
 
-    folders = _photo_folders(assets_path)
+    folders = _photo_folders(assets_path, photo_manifest)
     species = []
     ids: set[str] = set()
     colors: set[str] = set()
@@ -270,7 +293,8 @@ def load_dataset(workbook_path: Path, assets_path: Path) -> dict:
             "color": _color(category_key, colors),
             "count": counts[category_key],
             "image_count": len(photos),
-            "thumbnail": _image_url(photos[0], assets_path) if photos else None,
+            "thumbnail": (_image_url(photos[0], assets_path).replace("/media/", "/thumbnails/", 1)
+                          if photo_manifest else _image_url(photos[0], assets_path)) if photos else None,
             "image_folder": photos[0].parent.name if photos else None,
         })
 

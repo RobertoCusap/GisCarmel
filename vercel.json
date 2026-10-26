@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "flask",
+  "buildCommand": "python build.py --check",
+  "functions": {
+    "app.py": {
+      "includeFiles": "{DATA_FOR_MAPPING-1.xlsx,data/photo_manifest.json,templates/**}",
+      "excludeFiles": "{assets/**,public/**,static/**,.venv/**,venv/**,.qa/**,.artifacts/**,tests/**,docs/**,.git/**,**/__pycache__/**,build.py,requirements-dev.txt}"
+    }
+  }
+}

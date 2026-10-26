@@ -36,13 +36,18 @@ def create_app(config: dict | None = None) -> Flask:
     app.config.from_mapping(
         DATA_FILE=os.environ.get("DATA_FILE", str(ROOT / "DATA_FOR_MAPPING-1.xlsx")),
         ASSETS_DIR=str(ROOT / "assets"),
+        PUBLIC_DIR=str(ROOT / "public"),
+        PHOTO_MANIFEST=str(ROOT / "data" / "photo_manifest.json") if (ROOT / "data" / "photo_manifest.json").is_file() else None,
         JSON_SORT_KEYS=False,
     )
     if config:
         app.config.update(config)
+        if "ASSETS_DIR" in config and "PHOTO_MANIFEST" not in config:
+            app.config["PHOTO_MANIFEST"] = None
     app.json.sort_keys = False
     try:
-        dataset = load_dataset(Path(app.config["DATA_FILE"]), Path(app.config["ASSETS_DIR"]))
+        dataset = load_dataset(Path(app.config["DATA_FILE"]), Path(app.config["ASSETS_DIR"]),
+                               photo_manifest=app.config["PHOTO_MANIFEST"])
         error = None
     except DataError as exc:
         dataset, error = None, str(exc)
@@ -84,9 +89,22 @@ def create_app(config: dict | None = None) -> Flask:
 
     @app.get("/media/<path:filename>")
     def media(filename: str):
-        assets = Path(app.config["ASSETS_DIR"]).resolve()
-        path = (assets / filename).resolve()
-        if not path.is_relative_to(assets) or path.suffix.lower() not in IMAGE_EXTENSIONS or not path.is_file():
+        roots = [Path(app.config["PUBLIC_DIR"]) / "media", Path(app.config["ASSETS_DIR"])]
+        return serve_photo(filename, roots)
+
+    @app.get("/thumbnails/<path:filename>")
+    def thumbnails(filename: str):
+        return serve_photo(filename, [Path(app.config["PUBLIC_DIR"]) / "thumbnails"])
+
+    def serve_photo(filename: str, roots: list[Path]):
+        path = None
+        for root in roots:
+            root = root.resolve()
+            candidate = (root / filename).resolve()
+            if candidate.is_relative_to(root) and candidate.suffix.lower() in IMAGE_EXTENSIONS and candidate.is_file():
+                path = candidate
+                break
+        if path is None:
             abort(404)
         raw_size = request.args.get("size")
         if raw_size is None:
